@@ -12,14 +12,9 @@ int** a;
 int** b;
 
 void main(){
-    // a=malloc(sizeof(int)*400);
-    // b=malloc(sizeof(int)*400);
-    // char ar[6]="ahmed";
-    // printf(strcat(ar,".txt"));
-    // int a[][];
-    a=malloc(sizeof(*a)*20*20);
+    // a=malloc(sizeof(*a)*20*20);
     a = readMat("a");
-    for (int i=0;i<3;i++){
+    for (int i=0;i<5;i++){
         for (int j=0;j<5;j++){
             printf("%d ",a[i][j]);
         }
@@ -66,26 +61,12 @@ int** readMat (char* file){
         *(m+i) = mat[i];
     }
 
-    // for (int i=0;i<3;i++){
-    //     for (int j=0;j<5;j++){
-    //         printf("%d ",m[i][j]);
-    //     }
-    //     printf("\n");
-    // }
-
-    // matrix = malloc( sizeof *matrix * rows );
-    // matrix=malloc(sizeof(int)*rows*cols);
-    // for (int i=0;i<rows;i++){
-    //     for (int j=0;j<cols;j++){
-    //         *(matrix+i)[j] = mat[i][j];
-    //         // printf ("%d",(*(matrix+i)));
-    //     }
-    //     printf("\n");
-    // }
-
-    // for (int i=0;i<rows+cols;i++){
-    //     printf ("%d\n",(*(matrix+i)));
-    // }
+    for (int i=0;i<5;i++){
+        for (int j=0;j<5;j++){
+            printf("%d ",m[i][j]);
+        }
+        printf("\n");
+    }
 
     fclose (f);
     return m;
