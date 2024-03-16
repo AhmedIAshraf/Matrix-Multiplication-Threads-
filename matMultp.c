@@ -18,8 +18,14 @@ typedef struct elemThrPatam{
     int col;
 }param;
 
+typedef struct Information{
+    char* mat1;
+    char* mat2;
+    char* dest;
+}info;
+
 mat readMat (char* file);
-void parseInput (char* input, char* mat1, char* mat2, char* dest);
+info parseInput (char* input);
 long unsigned SolveNoThreads();
 long unsigned SolveRowThreads();
 long unsigned SolveElementThreads();
@@ -28,21 +34,19 @@ void* computeRow (void* ind);
 void* computeElement (param* ptr);
 void Error(char* msg);
 
-
 mat a,b,c;
+char* dest;
 
 void main(){
     
     char line[100];
+    char* mat1,*mat2;
     scanf("%[^\n]s", line);
-    char* mat1="a";
-    char* mat2="b";
-    char* dest="c";
-    printf("Line Done = %s\n",line);
-    printf("m1:%s\n m2:%s\n m3:%s\n",mat1,mat2,dest);
+    info recieve=parseInput(line);
+    mat1=recieve.mat1, mat2=recieve.mat2, dest=recieve.dest;
 
-    a = readMat("a");
-    b = readMat("b");
+    a = readMat(mat1);
+    b = readMat(mat2);
     if (a.cols!=b.rows) Error("Dimentions can't be Correct");
 
     c.rows=a.rows; c.cols=b.cols;
@@ -151,11 +155,11 @@ void* computeElement (param* ptr){
 
 void writeFile(int n){
     
-    char* name;
+    char* name=dest;
     char* method;
-    if (n==1) {name="c_per_matrix.txt", method="Method: A thread per matrix";}
-    else if (n==2) {name="c_per_row.txt", method="Method: A thread per row";}
-    else if (n==3) {name="c_per_element.txt", method="Method: A thread per element";}
+    if (n==1) {strcat(name,"_per_matrix.txt"), method="Method: A thread per matrix";}
+    else if (n==2) {strcat(name,"_per_row.txt"), method="Method: A thread per row";}
+    else if (n==3) {strcat(name,"_per_element.txt"), method="Method: A thread per element";}
      
     FILE *f = fopen(name,"w");
     fprintf(f,"%s\nrow=%d col=%d\n",method,c.rows,c.cols);
@@ -168,8 +172,9 @@ void writeFile(int n){
     fclose(f);
 }
 
-void parseInput (char* input, char* mat1, char* mat2, char* dest){
+info parseInput (char* input){
     char** in = (char**) malloc(4*sizeof(char*));
+    char* mat1="a", *mat2="b", *dest="c";
     char* parse = strtok(input," ");
     for (int i=0;i<4&&parse!=NULL;i++){
         printf("Parse [%d] = %s\n",i,parse);
@@ -179,6 +184,8 @@ void parseInput (char* input, char* mat1, char* mat2, char* dest){
         else if(i==3) dest=parse;
         parse = strtok(NULL," ");
     }
+    info toReturn={.mat1=mat1 , .mat2=mat2 , .dest=dest};
+    return toReturn;
 }  
 
 mat readMat (char* file){
