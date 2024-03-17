@@ -39,7 +39,7 @@ char* dest;
 
 void main(){
     
-    char line[100];
+    char line[150];
     char* mat1,*mat2;
     scanf("%[^\n]s", line);
     info recieve=parseInput(line);
@@ -95,10 +95,10 @@ long unsigned SolveRowThreads(){
 
     for (int i=0;i<a.rows;i++){
         int res= pthread_create(&threads[i],NULL,&computeRow,(void*) i);
-        //If res==0 error
+        if(res!=0) Error("Something Happened While Creating Thread");
     }
     for (int i=0;i<a.rows;i++){
-        pthread_join(threads[i],NULL);
+        if(pthread_join(threads[i],NULL)!=0) Error("Threads got an Error while Joining Threads");
     }
 
     gettimeofday(&stop, NULL);
@@ -109,11 +109,10 @@ long unsigned SolveRowThreads(){
 void* computeRow (void* ind){
     int row = ind;
     for (int j=0;j<b.cols;j++){
-        long res=0;
+        c.m[row][j]=0;
         for (int k=0;k<b.rows;k++){
-            res += (a.m[row][k]*b.m[k][j]);
+            c.m[row][j] += (a.m[row][k]*b.m[k][j]);
         }
-        c.m[row][j]=res;
     }
 }
 
@@ -121,45 +120,52 @@ long unsigned SolveElementThreads(){
     
     struct timeval stop, start;
     pthread_t threads[c.rows][c.cols];
-    gettimeofday(&start, NULL);
-    param elem;
     param* ptr = (param*) malloc(sizeof(param));
-    ptr = &elem;
+    gettimeofday(&start, NULL);
 
     for (int i=0;i<c.rows;i++){
         for (int j=0;j<c.cols;j++){
-            elem.row=i; elem.col=j;
+            ptr->row=i; ptr->col=j;
             int res= pthread_create(&threads[i][j],NULL,&computeElement,ptr);
-            //If res==0 error
+            if(res!=0) Error("Something Happened While Creating Thread");
         }
     }
     for (int i=0;i<c.rows;i++){
         for (int j=0;j<c.cols;j++){
-            pthread_join(threads[i][j],NULL); 
+            if(pthread_join(threads[i][j],NULL)!=0) Error("Threads got an Error while Joining Threads"); 
         }
     }
 
     gettimeofday(&stop, NULL);
     writeFile(3);
-    // free(ptr);
+    free(ptr);
     return stop.tv_usec - start.tv_usec;
 }
 
 void* computeElement (param* ptr){
-    long res=0;
+    c.m[ptr->row][ptr->col]=0;
     for (int k=0;k<b.rows;k++){
-        res += (a.m[ptr->row][k]*b.m[k][ptr->col]);
+        c.m[ptr->row][ptr->col] += (a.m[ptr->row][k]*b.m[k][ptr->col]);
     }
-    c.m[ptr->row][ptr->row]=res;
 }
 
 void writeFile(int n){
-    
-    char* name=dest;
+    char* name= malloc(strlen(dest));
+    strcpy(name,dest);
     char* method;
-    if (n==1) {strcat(name,"_per_matrix.txt"), method="Method: A thread per matrix";}
-    else if (n==2) {strcat(name,"_per_row.txt"), method="Method: A thread per row";}
-    else if (n==3) {strcat(name,"_per_element.txt"), method="Method: A thread per element";}
+    if (n==1) {
+        name = (char *) realloc(name, strlen(dest)+strlen("_per_matrix.txt"));
+        strcat(name,"_per_matrix.txt");
+        method="Method: A thread per matrix";
+    }else if (n==2) {
+        name = (char *) realloc(name, strlen(dest)+strlen("_per_row.txt"));
+        strcat(name,"_per_row.txt");
+        method="Method: A thread per row";
+    }else if (n==3) {
+        name = (char *) realloc(name, strlen(dest)+strlen("_per_element.txt"));
+        strcat(name,"_per_element.txt");
+        method="Method: A thread per element";
+    }
      
     FILE *f = fopen(name,"w");
     fprintf(f,"%s\nrow=%d col=%d\n",method,c.rows,c.cols);
@@ -169,16 +175,19 @@ void writeFile(int n){
         }
         fprintf(f,"\n");
     }
+    free(name);
     fclose(f);
 }
 
 info parseInput (char* input){
-    char** in = (char**) malloc(4*sizeof(char*));
     char* mat1="a", *mat2="b", *dest="c";
     char* parse = strtok(input," ");
     for (int i=0;i<4&&parse!=NULL;i++){
-        printf("Parse [%d] = %s\n",i,parse);
-        if(i==0&&strcmp(parse,"./matMultp")!=0) Error("Wrong Command");
+        // if(i==0&&strcmp(parse,"./matMultp")!=0) Error("Wrong Command");
+        if(i==0){
+            int n = chdir(parse);
+            if (n!=0) Error("No Such File or Directory");
+        }
         else if(i==1) mat1=parse;
         else if(i==2) mat2=parse;
         else if(i==3) dest=parse;
